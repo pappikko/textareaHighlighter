@@ -159,9 +159,8 @@ function checkForbiddenWords(that, forbiddenWordsRegexp) {
 
         var matchWords = str.match(forbiddenWordsRegexp);
         $.each(matchWords, function (i, e) {
-            var reg = new RegExp(e, 'g');
             var replaceStr = '<span class="forbidden-word">'+e+'</span>';
-            str = str.replace(reg, replaceStr);
+            str = str.replace(e, replaceStr);
         })
 
     // アラートメッセージを消す
