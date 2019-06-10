@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title></title>
+    <!-- JSライブラリ -->
+    <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <script src="jquery-ui-1.12.1/jquery-ui.min.js"></script>
+    <!-- CSSライブラリ -->
+    <link rel="stylesheet" href="reset.css">
+    <style>
+        body {
+            background-color: #EDFAF7;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .forbidden-word-alert {
+            color: red;
+            display: none;
+        }
+        .forbidden-word {
+            background-color: lightpink;
+        }
+        .text-highlighter-wrap {
+            position: relative;
+        }
+        .text-highlight-container {
+            position: absolute;
+            color: lightcoral; /* テスト用 */
+            /* color: transparent; 本番用 */
+            width: 100%;
+            background-color: white;
+
+            /* 以下はチューニング部分 */
+            font-size: initial;
+            line-height: 20px;
+        }
+        .text-highlighter {
+            white-space: pre-wrap; /* これを指定するとテキストエリアの改行がdivに反映される */
+            word-wrap: break-word;
+            padding: 2px;
+        }
+        #textarea textarea {
+            position: relative;
+            z-index: 1;
+            resize: none;
+            background-color: transparent;
+
+            /* 以下はチューニング部分 */
+            height: 100px;
+            padding: 2px;
+            font-size: initial;
+            line-height: 20px;
+            overflow-y: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button id="insert-value">値を挿入</button>
+
+        <div id="textarea">
+            <textarea name="test" class="textarea" cols="100">テスト圧倒的</textarea>
+        </div>
+    </div>
+
+</body>
+
+<script>
+
+// 禁止語
+forbiddenWords = ['日本一', '圧倒的', '一番'];
+
+// 使用制限語の正規表現
+var forbiddenWordsRegexp = forbiddenWords.join('|');
+forbiddenWordsRegexp = new RegExp(forbiddenWordsRegexp, 'g');
+
+// チェック対象のフォーム
+var ForbiddenWordCheckFroms = '#textarea textarea';
+
+// アラートメッセージを追加
+$(ForbiddenWordCheckFroms).before(`
+<div class="forbidden-word-alert">
+    <small>あかんで！！！！</small>
+</div>
+`);
+
+// テキストエリアをラップ
+$(ForbiddenWordCheckFroms).wrap('<div class="text-highlighter-wrap"></div');
+
+// ハイライトコンテナとハイライターを追加
+$('.text-highlighter-wrap').prepend(`
+<div class="text-highlight-container">
+    <div class="text-highlighter">
+    </div>
+</div>
+`);
+
+// 初期表示
+$(ForbiddenWordCheckFroms).each(function () {
+    // 禁止語のチェック
+    checkForbiddenWords($(this), forbiddenWordsRegexp);
+    // テキストエリアのリサイズ
+    resizeTextarea($(this));
+})
+
+// キー操作
+$(ForbiddenWordCheckFroms).on('keyup keydown', function(){
+    // 禁止語のチェック
+    checkForbiddenWords($(this), forbiddenWordsRegexp);
+    // テキストエリアのリサイズ
+    resizeTextarea($(this));
+});
+
+// ペースト
+$(ForbiddenWordCheckFroms).on('paste', function(){
+    // ペーストはタイミングを遅らせる
+    setTimeout(() => {
+        checkForbiddenWords($(this), forbiddenWordsRegexp);
+        // テキストエリアのリサイズ
+        resizeTextarea($(this));
+    }, 10);
+});
+
+// ボタンクリック
+$('#insert-value').on('click', function () {
+    setTimeout(() => {
+        $(ForbiddenWordCheckFroms).each(function () {
+            // 禁止語のチェック
+            checkForbiddenWords($(this), forbiddenWordsRegexp);
+            // テキストエリアのリサイズ
+            resizeTextarea($(this));
+        })
+    }, 10);
+});
+
+// テスト用
+$('#insert-value').on('click', function () {
+    var str = '圧倒的、日本一、一番';
+    $('#textarea textarea').val(str);
+})
+
+
+function checkForbiddenWords(that, forbiddenWordsRegexp) {
+    var str = that.val();
+    var forbiddenWordAlert = that.parents('.text-highlighter-wrap').prev('.forbidden-word-alert');
+    var textHighlighter = that.prev('.text-highlight-container').children('.text-highlighter');
+    var isForbiddenWordsInStr = forbiddenWordsRegexp.test(str);
+
+    if (isForbiddenWordsInStr) {
+        // アラートメッセージを表示
+        if (forbiddenWordAlert.css('display') === 'none') {
+            forbiddenWordAlert.css('display', 'inline');
+        }
+
+        var matchWords = str.match(forbiddenWordsRegexp);
+        $.each(matchWords, function (i, e) {
+            var reg = new RegExp(e, 'g');
+            var replaceStr = '<span class="forbidden-word">'+e+'</span>';
+            str = str.replace(reg, replaceStr);
+        })
+
+    // アラートメッセージを消す
+    } else if (forbiddenWordAlert.css('display') === 'inline') {
+        forbiddenWordAlert.css('display', 'none');
+    }
+
+    textHighlighter.html(str);
+}
+
+function resizeTextarea(that) {
+    var textHighlighterWrap = that.parents('.text-highlighter-wrap');
+    var textHighlighterHeight = that.prev('.text-highlight-container').children('.text-highlighter').outerHeight();
+
+    if (textHighlighterHeight > 100) {
+        // divのテキストとtextareaのテキストがずれないように高さを調整する(プラスするpx数はチューニング必要)
+        textHighlighterWrap.children().css('height', (textHighlighterHeight + Number(20)) + 'px');
+    } else {
+        textHighlighterWrap.children().css('height', '100px');
+    }
+}
+</script>
+
+</html>
