@@ -77,7 +77,7 @@ var forbiddenWords = ['日本一', '圧倒的', '一番'];
 
 // 使用制限語の正規表現
 var forbiddenWordsRegex = forbiddenWords.join('|');
-forbiddenWordsRegex = new Regexp(forbiddenWordsRegex, 'g');
+forbiddenWordsRegex = new RegExp(forbiddenWordsRegex, 'g');
 
 // チェック対象のフォーム
 var ForbiddenWordCheckFroms = '#textarea textarea';
