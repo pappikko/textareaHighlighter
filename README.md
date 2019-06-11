@@ -8,6 +8,10 @@
 
 ## jQuery highlightTextarea
 https://garysieling.github.io/jquery-highlighttextarea/
+
 便利なライブラリがあるが、キー操作、マウス操作のみの対応で、
 初期表示やJSで値を挿入するタイミングでイベントを発火できなかったため、
 自前で実装した。
+
+※他にも調べればあるようでした。
+https://github.com/marexandre/jquery.textarea-highlighter.js
