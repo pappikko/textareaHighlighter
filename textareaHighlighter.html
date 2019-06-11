@@ -73,11 +73,11 @@
 <script>
 
 // 禁止語
-forbiddenWords = ['日本一', '圧倒的', '一番'];
+var forbiddenWords = ['日本一', '圧倒的', '一番'];
 
 // 使用制限語の正規表現
-var forbiddenWordsRegexp = forbiddenWords.join('|');
-forbiddenWordsRegexp = new RegExp(forbiddenWordsRegexp, 'g');
+var forbiddenWordsRegex = forbiddenWords.join('|');
+forbiddenWordsRegex = new Regexp(forbiddenWordsRegex, 'g');
 
 // チェック対象のフォーム
 var ForbiddenWordCheckFroms = '#textarea textarea';
@@ -103,7 +103,7 @@ $('.text-highlighter-wrap').prepend(`
 // 初期表示
 $(ForbiddenWordCheckFroms).each(function () {
     // 禁止語のチェック
-    checkForbiddenWords($(this), forbiddenWordsRegexp);
+    checkForbiddenWords($(this), forbiddenWordsRegex);
     // テキストエリアのリサイズ
     resizeTextarea($(this));
 })
@@ -111,7 +111,7 @@ $(ForbiddenWordCheckFroms).each(function () {
 // キー操作
 $(ForbiddenWordCheckFroms).on('keyup keydown', function(){
     // 禁止語のチェック
-    checkForbiddenWords($(this), forbiddenWordsRegexp);
+    checkForbiddenWords($(this), forbiddenWordsRegex);
     // テキストエリアのリサイズ
     resizeTextarea($(this));
 });
@@ -120,7 +120,7 @@ $(ForbiddenWordCheckFroms).on('keyup keydown', function(){
 $(ForbiddenWordCheckFroms).on('paste', function(){
     // ペーストはタイミングを遅らせる
     setTimeout(() => {
-        checkForbiddenWords($(this), forbiddenWordsRegexp);
+        checkForbiddenWords($(this), forbiddenWordsRegex);
         // テキストエリアのリサイズ
         resizeTextarea($(this));
     }, 10);
@@ -131,7 +131,7 @@ $('#insert-value').on('click', function () {
     setTimeout(() => {
         $(ForbiddenWordCheckFroms).each(function () {
             // 禁止語のチェック
-            checkForbiddenWords($(this), forbiddenWordsRegexp);
+            checkForbiddenWords($(this), forbiddenWordsRegex);
             // テキストエリアのリサイズ
             resizeTextarea($(this));
         })
@@ -145,23 +145,22 @@ $('#insert-value').on('click', function () {
 })
 
 
-function checkForbiddenWords(that, forbiddenWordsRegexp) {
+function checkForbiddenWords(that, forbiddenWordsRegex) {
     var str = that.val();
     var forbiddenWordAlert = that.parents('.text-highlighter-wrap').prev('.forbidden-word-alert');
     var textHighlighter = that.prev('.text-highlight-container').children('.text-highlighter');
-    var isForbiddenWordsInStr = forbiddenWordsRegexp.test(str);
+    // test()にはlastIndex問題があるので、毎回オブジェクトを生成するか、matchを利用する
+    // var regex = new Regexp(forbiddenWords)
+    // var isForbiddenWordsInStr = forbiddenWordsRegex.test(str);
+    var forbiddenWordsInStr = str.match(forbiddenWordsRegex);
 
-    if (isForbiddenWordsInStr) {
+    if (forbiddenWordsInStr !== null && forbiddenWordsInStr.length > 0) {
         // アラートメッセージを表示
         if (forbiddenWordAlert.css('display') === 'none') {
             forbiddenWordAlert.css('display', 'inline');
         }
 
-        var matchWords = str.match(forbiddenWordsRegexp);
-        $.each(matchWords, function (i, e) {
-            var replaceStr = '<span class="forbidden-word">'+e+'</span>';
-            str = str.replace(e, replaceStr);
-        })
+        str = highlightText(str, forbiddenWordsInStr);
 
     // アラートメッセージを消す
     } else if (forbiddenWordAlert.css('display') === 'inline') {
@@ -169,6 +168,15 @@ function checkForbiddenWords(that, forbiddenWordsRegexp) {
     }
 
     textHighlighter.html(str);
+}
+
+function highlightText (str, forbiddenWordsInStr) {
+    $.each(forbiddenWordsInStr, function (i, e) {
+        var replaceStr = '<span class="forbidden-word">'+e+'</span>';
+        str = str.replace(e, replaceStr);
+    })
+
+    return str;
 }
 
 function resizeTextarea(that) {
